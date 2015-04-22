@@ -19,7 +19,13 @@
 			subscriptions: {
 				publishers: ['generic'],
 				tags: ['generic', 'global']
-			}
+			},
+			callbacks: [
+
+				function(payload) {
+					console.log(payload);
+				}
+			]
 		}],
 
 		// check if a given thing is an array.  If not, make it one.
@@ -31,24 +37,49 @@
 			} else {
 				throw 'Value must be a string or array';
 			}
+		},
+
+		getSubscribersByName = function(publisherName) {
+			return subscribers.map(function(currentSubscriber) {
+				return currentSubscriber.name === publisherName;
+			});
+		},
+
+		getSubscribersByTags = function(tagName) {
+			return subscribers.map(function(currentSubscriber) {
+				return currentSubscriber.subscriptions.tags.indexOf(tagName) > -1;
+			});
+		},
+
+		getCallbacks = function(subscribers) {
+			return subscribers.map(function(currentSubscriber) {
+				return currentSubscriber.callbacks;
+			});
 		};
 
-		window.QMS.addPublisher = function(publisherData) {
-			publisherData.tags = convertValueToArray(publisherData.tags);
+	window.QMS.addPublisher = function(publisherData) {
+		publisherData.tags = convertValueToArray(publisherData.tags);
 
-			publishers.push(publisherData);
-		};
+		publishers.push(publisherData);
+	};
 
-		window.QMS.addSubscriber = function(subscriberData) {
-			subscriberData.publishers.tags = convertValueToArray(subscriberData.publishers.tags);
+	window.QMS.addSubscriber = function(subscriberData) {
+		subscriberData.publishers.tags = convertValueToArray(subscriberData.publishers.tags);
 
-			subscriberData.subscriptions.tags = convertValueToArray(subscriberData.subscriptions.tags);
+		subscriberData.subscriptions.tags = convertValueToArray(subscriberData.subscriptions.tags);
 
-			subscribers.push(subscriberData);
-		};
+		subscriberData.subscriptions.callbacks = convertValueToArray(subscriberData.subscriptions.callbacks);
 
-		window.QMS.emit = function(eventData) {
-			
-		};
+		subscribers.push(subscriberData);
+	};
+
+	window.QMS.emit = function(eventData) {
+		var subscribers = getSubscribersByName(eventData.name),
+			callbacks = getCallbacks(subscribers);
+
+		callbacks.forEach(function(currentCallback) {
+			currentCallback();
+		});
+	};
 
 }());
